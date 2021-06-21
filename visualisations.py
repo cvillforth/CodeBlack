@@ -42,6 +42,7 @@ def bh_interactive(manual=True):
 
     def f(r_blr, bhmass):
         #creating the figure
+        plt.xkcd()
         plt.figure(2)
         ##Calculate the schwarzschild radius
         r_s = schwarzschild(10**(bhmass)*M_sun)/scale_by
@@ -50,38 +51,49 @@ def bh_interactive(manual=True):
         ## calculates keplerian velocity
         v_ar = kepler_velocity(x*scale_by, 10**(bhmass)*M_sun)/1000
         ##plots the Keplerian rotation curve
-        plt.plot(x, v_ar, c='grey')
+        plt.plot(x[x<3*r_s], v_ar[x<3*r_s], c='grey', ls='--')
+        plt.plot(x[x>3*r_s], v_ar[x>3*r_s], c='k')
         ##calculates and markes the current radius and velocity
-        plt.axvline(r_blr, c='r', ls='--')
+        plt.axvline(r_blr, c='m', ls='--')
         if r_blr >= r_s:
             v = kepler_velocity(r_blr*scale_by, 10**(bhmass)*M_sun)/1000
         else:
             v = kepler_velocity(r_s*scale_by, 10**(bhmass)*M_sun)/1000
-        plt.axhline(v, c='r', ls='--')
-        plt.plot([r_blr], [v], marker='*', c='r', ms=20)
+        plt.axhline(v, c='m', ls='--')
+        plt.plot([r_blr], [v], marker='*', c='m', ms=20)
         ##Calculate the schwarzschild radius
         r_s = schwarzschild(10**(bhmass)*M_sun)/scale_by
-        plt.text(1.1*r_s, 0.9*max(v_ar), "Schwarzschild Radius", rotation=90, ha='left', va='top', c='m', weight='bold')
-        plt.axvline(r_s, c='m')
-        plt.axvline(0, c='m')
-        plt.gca().add_patch(Rectangle((0,0),r_s,1.2*max(v_ar),fill=True, color='m', alpha=0.5, zorder=100))
-        if r_blr > r_s:
+        #Mark the innermost stable circular orbit
+        plt.text(3.1*r_s, 0.9*max(v_ar), "No more stable circular orbits", rotation=90, ha='left', va='top', c='orange', weight='bold')
+        plt.axvline(3*r_s, c='orange')
+        plt.axvline(r_s, c='orange')
+        plt.gca().add_patch(Rectangle((r_s,0),2*r_s,1.2*max(v_ar),fill=True, color='orange', alpha=0.5, zorder=100))
+        #Mark the schwarzschild radius
+        plt.text(1.1*r_s, 0.9*max(v_ar), "Schwarzschild Radius", rotation=90, ha='left', va='top', c='r', weight='bold')
+        plt.axvline(r_s, c='r')
+        plt.axvline(0, c='r')
+        plt.gca().add_patch(Rectangle((0,0),r_s,1.2*max(v_ar),fill=True, color='r', alpha=0.5, zorder=100))
+        if r_blr > 3*r_s:
             plt.text(0.25*max_r, 0.8*max(v_ar),
                      "You are at %.2f %s \n from a %.2f Million Solar mass black hole \n and are rotating at %.2f km/s"
                      %(r_blr, scale_by_name, 10**(bhmass)/1e6, v), weight='bold')
+        elif r_blr > r_s:
+            plt.text(0.25*max_r, 0.8*max(v_ar),
+                     "You are no longer on a stable orbit and \n are plunging towards the black hole!", weight='bold', c='orange')
         else:
             plt.text(0.25*max_r, 0.8*max(v_ar),"You have fallen into the black hole!", weight='bold', c='r')
         plt.xlim(0,max_r)
-        plt.xlabel("Distance from BH (in %s)" % scale_by_name)
-        plt.ylabel("Velocity or objects orbiting (in km/s)")
+        plt.xlabel("Distance from black hole (in %s)" % scale_by_name)
+        plt.ylabel("Orbital Velocity (in km/s)")
+        plt.title("Orbiting a black hole")
         plt.show()
     
     blr_slider = widgets.FloatSlider(
-        value=max_r,
+        value=0.5*max_r,
         min=0,
         max=max_r,
         step=0.1,
-        description='distance from BH',
+        description='distance',
         disabled=False,
         continuous_update=True,
         orientation='horizontal',
@@ -93,7 +105,7 @@ def bh_interactive(manual=True):
         min=6,
         max=9,
         step=0.1,
-        description='BH mass (log)',
+        description='(log$M_{BH}$)',
         disabled=False,
         continuous_update=True,
         orientation='horizontal',
@@ -102,3 +114,88 @@ def bh_interactive(manual=True):
 
     interactive_plot = interactive(f, {'manual': manual}, r_blr=blr_slider, bhmass=bhmass_slider)
     return(interactive_plot)
+
+
+def analyze_spectrum(manual=True):
+    wl = np.arange(6950, 7400, 5)
+    def emlinecont(cont, linepos, velocity, lineflux):
+        sigma = (velocity*linepos)/(c/1000)
+        norm = lineflux*1000
+        line = (norm / (sigma * np.sqrt(2 * np.pi))) * np.exp(-((wl - linepos)** 2)/ (2 * sigma**2))
+        full = line+cont
+        return(full)
+    spectrum = np.loadtxt('spectrum.txt', delimiter=',')
+    wavelength = spectrum[:,0]
+    flux = spectrum[:,1]
+    
+    def f(cont, linepos, velocity, lineflux):
+        #creating the figure
+        plt.xkcd()
+        plt.figure(2)
+        plt.plot(wavelength, flux, ls='-', c='k', lw=1)
+        plt.xlabel('Wavelength [$\AA$]')
+        plt.ylabel('Flux')
+        plt.xlim(6950, 7400)
+        plt.ylim(12, 27)
+        z=0.4563313
+        plt.title("Measuring has velocity around a black hole.")
+        plt.axvline(5008*(1+z), ls=':', c='b')
+        plt.axvline(4960*(1+z), ls=':', c='b')
+        plt.axvline(4863*(1+z), ls='--', c='r')
+        plt.plot(wl, emlinecont(cont, linepos, velocity, lineflux), ls='-', c='r')
+        
+    cont_slider = widgets.FloatSlider(
+        value=15,
+        min=10,
+        max=20,
+        step=1,
+        description='baseline',
+        disabled=False,
+        continuous_update=True,
+        orientation='horizontal',
+        readout=True,
+        readout_format='.1f')
+
+    linepos_slider = widgets.FloatSlider(
+        value=7100,
+        min=6950,
+        max=7400,
+        step=1,
+        description='position',
+        disabled=False,
+        continuous_update=True,
+        orientation='horizontal',
+        readout=True,
+        readout_format='.1f')
+    
+    velocity_slider = widgets.FloatSlider(
+        value=1000,
+        min=100,
+        max=10000,
+        step=10,
+        description='velocity',
+        disabled=False,
+        continuous_update=True,
+        orientation='horizontal',
+        readout=True,
+        readout_format='.1f')
+    
+    lineflux_slider = widgets.FloatSlider(
+        value=1,
+        min=0.1,
+        max=5,
+        step=0.1,
+        description='lineflux',
+        disabled=False,
+        continuous_update=True,
+        orientation='horizontal',
+        readout=True,
+        readout_format='.1f')
+
+
+    interactive_plot = interactive(f, {'manual': manual}, cont=cont_slider, linepos=linepos_slider,
+                                  velocity=velocity_slider, lineflux=lineflux_slider)
+    return(interactive_plot)
+
+def tellmetheblackholemass():
+    print("The mass of the black hole is 8 x 10^8 solar masses or 1.6 x 10^39 kg.")
