@@ -138,11 +138,100 @@ def analyze_spectrum(manual=True):
         plt.xlim(6950, 7400)
         plt.ylim(12, 27)
         z=0.4563313
-        plt.title("Measuring has velocity around a black hole.")
+        plt.title("Measuring gas velocity around a black hole.")
         plt.axvline(5008*(1+z), ls=':', c='b')
         plt.axvline(4960*(1+z), ls=':', c='b')
         plt.axvline(4863*(1+z), ls='--', c='r')
         plt.plot(wl, emlinecont(cont, linepos, velocity, lineflux), ls='-', c='r')
+        
+    cont_slider = widgets.FloatSlider(
+        value=15,
+        min=10,
+        max=20,
+        step=1,
+        description='baseline',
+        disabled=False,
+        continuous_update=True,
+        orientation='horizontal',
+        readout=True,
+        readout_format='.1f')
+
+    linepos_slider = widgets.FloatSlider(
+        value=7100,
+        min=6950,
+        max=7400,
+        step=1,
+        description='position',
+        disabled=False,
+        continuous_update=True,
+        orientation='horizontal',
+        readout=True,
+        readout_format='.1f')
+    
+    velocity_slider = widgets.FloatSlider(
+        value=1000,
+        min=100,
+        max=10000,
+        step=10,
+        description='velocity',
+        disabled=False,
+        continuous_update=True,
+        orientation='horizontal',
+        readout=True,
+        readout_format='.1f')
+    
+    lineflux_slider = widgets.FloatSlider(
+        value=1,
+        min=0.1,
+        max=5,
+        step=0.1,
+        description='lineflux',
+        disabled=False,
+        continuous_update=True,
+        orientation='horizontal',
+        readout=True,
+        readout_format='.1f')
+
+
+    interactive_plot = interactive(f, {'manual': manual}, cont=cont_slider, linepos=linepos_slider,
+                                  velocity=velocity_slider, lineflux=lineflux_slider)
+    return(interactive_plot)
+
+
+
+def fit_spectrum(manual=True):
+    def emlinecont(cont, linepos, velocity, lineflux):
+        sigma = (velocity*linepos)/(c/1000)
+        norm = lineflux*1000
+        line = (norm / (sigma * np.sqrt(2 * np.pi))) * np.exp(-((wl - linepos)** 2)/ (2 * sigma**2))
+        full = line+cont
+        return(full)
+    spectrum = np.loadtxt('spectrum.txt', delimiter=',')
+    full_wavelength = spectrum[:,0]
+    full_flux = spectrum[:,1]
+    wlmask = (full_wavelength > 6950) & (full_wavelength < 7200)
+    wl = full_wavelength[wlmask]
+    flux = full_flux[wlmask]
+    z=0.4563313
+        
+    def f(cont, linepos, velocity, lineflux):
+        #creating the figure
+        linefit = emlinecont(cont, linepos, velocity, lineflux)
+        plt.xkcd()
+        fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(20,10))
+        ax0.plot(wl, flux, ls='-', c='k', lw=1)
+        ax0.set_ylabel('Flux')
+        ax0.set_xlabel("Wavelength [\AA]")
+        ax0.set_ylim(12, 18)
+        ax0.set_title("Spectrum and Fit")
+        z=0.4563313
+        ax0.axvline(4863*(1+z), ls='--', c='r')
+        ax0.plot(wl, linefit, ls='-', c='r')
+        
+        ax1.set_title("Distance beween spectrum and fit")
+        ax1.set_xlabel("Wavelength [\AA]")
+        ax1.plot(wl, flux-linefit, ls='-', c='k')
+        ax1.axhline(0,ls='--', c='grey')
         
     cont_slider = widgets.FloatSlider(
         value=15,
