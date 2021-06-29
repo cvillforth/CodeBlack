@@ -31,14 +31,18 @@ def schwarzschild(Mbh):
     rs = 2*G*Mbh/(c**2)
     return rs
 
-def bh_interactive(manual=True):
+def bh_interactive(manual=True, log=False):
     #setting the scale over which we will look at the rotation velocity.
     #min_r = 0.01
-    max_r = 100
+    if log:
+        max_r = 1000
+    else:
+        max_r = 100
 
     ##We will not be looking at distances in meters, instead, lets use astronimcal units
     scale_by = au
     scale_by_name = 'Astronomical Units'
+    
 
     def f(r_blr, bhmass):
         #creating the figure
@@ -47,7 +51,10 @@ def bh_interactive(manual=True):
         ##Calculate the schwarzschild radius
         r_s = schwarzschild(10**(bhmass)*M_sun)/scale_by
         ##creates an array of distances
-        x = np.linspace(r_s, max_r, num=1000)
+        if log:
+            x = np.array([0.1,0.5,1,2,3,4,5,6,7,8,9,10,50,100,500,1000])
+        else:
+            x = np.linspace(r_s, max_r, num=1000)
         ## calculates keplerian velocity
         v_ar = kepler_velocity(x*scale_by, 10**(bhmass)*M_sun)/1000
         ##plots the Keplerian rotation curve
@@ -67,12 +74,14 @@ def bh_interactive(manual=True):
         plt.text(3.1*r_s, 0.9*max(v_ar), "No more stable circular orbits", rotation=90, ha='left', va='top', c='orange', weight='bold')
         plt.axvline(3*r_s, c='orange')
         plt.axvline(r_s, c='orange')
-        plt.gca().add_patch(Rectangle((r_s,0),2*r_s,1.2*max(v_ar),fill=True, color='orange', alpha=0.5, zorder=100))
+        if log is False:
+            plt.gca().add_patch(Rectangle((r_s,0),2*r_s,1.2*max(v_ar),fill=True, color='orange', alpha=0.5, zorder=100))
         #Mark the schwarzschild radius
         plt.text(1.1*r_s, 0.9*max(v_ar), "Schwarzschild Radius", rotation=90, ha='left', va='top', c='r', weight='bold')
         plt.axvline(r_s, c='r')
         plt.axvline(0, c='r')
-        plt.gca().add_patch(Rectangle((0,0),r_s,1.2*max(v_ar),fill=True, color='r', alpha=0.5, zorder=100))
+        if log is False:
+            plt.gca().add_patch(Rectangle((0,0),r_s,1.2*max(v_ar),fill=True, color='r', alpha=0.5, zorder=100))
         if r_blr > 3*r_s:
             plt.text(0.25*max_r, 0.8*max(v_ar),
                      "You are at %.2f %s \n from a %.2f Million Solar mass black hole \n and are rotating at %.2f km/s"
@@ -82,7 +91,11 @@ def bh_interactive(manual=True):
                      "You are no longer on a stable orbit and \n are plunging towards the black hole!", weight='bold', c='orange')
         else:
             plt.text(0.25*max_r, 0.8*max(v_ar),"You have fallen into the black hole!", weight='bold', c='r')
-        plt.xlim(0,max_r)
+        if log:
+            plt.xscale("log")
+            plt.xlim(0.5*r_s, max_r)
+        else:
+            plt.xlim(0,max_r)
         plt.xlabel("Distance from black hole (in %s)" % scale_by_name)
         plt.ylabel("Orbital Velocity (in km/s)")
         plt.title("Orbiting a black hole")
