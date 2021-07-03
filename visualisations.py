@@ -52,7 +52,8 @@ def bh_interactive(manual=True, log=False):
         r_s = schwarzschild(10**(bhmass)*M_sun)/scale_by
         ##creates an array of distances
         if log:
-            x = np.array([0.1,0.5,1,2,3,4,5,6,7,8,9,10,50,100,500,1000])
+            #x = np.array([0.1,0.5,1,2,3,4,5,6,7,8,9,10,50,100,500,1000])
+            x = np.logspace(np.log10(r_s), np.log10(max_r), num=1000)
         else:
             x = np.linspace(r_s, max_r, num=1000)
         ## calculates keplerian velocity
@@ -101,17 +102,24 @@ def bh_interactive(manual=True, log=False):
         plt.title("Orbiting a black hole")
         plt.show()
     
-    blr_slider = widgets.FloatSlider(
-        value=0.5*max_r,
-        min=0,
-        max=max_r,
-        step=0.1,
-        description='distance',
-        disabled=False,
-        continuous_update=True,
-        orientation='horizontal',
-        readout=True,
-        readout_format='.1f')
+    
+    if log:
+        blr_slider = widgets.FloatText(
+                    value=7.5,
+                    description='distance',
+                    disabled=False)
+    else:
+        blr_slider = widgets.FloatSlider(
+             value=0.5*max_r,
+             min=0,
+             max=max_r,
+             step=0.1,
+             description='distance',
+             disabled=False,
+             continuous_update=True,
+             orientation='horizontal',
+             readout=True,
+             readout_format='.1f')
 
     bhmass_slider = widgets.FloatSlider(
         value=7,
