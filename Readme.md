@@ -8,3 +8,5 @@ This Jupyter notebook introduces basic concepts of programming and walks through
 - scipy
 - matplotlib
 - ipywidgets
+
+Run this notebook on binder: https://mybinder.org/v2/gh/cvillforth/CodeBlack/HEAD
