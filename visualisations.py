@@ -255,7 +255,7 @@ def fit_spectrum(manual=True):
         ax1.axhline(0,ls='--', c='grey')
         
     cont_slider = widgets.FloatSlider(
-        value=15,
+        value=12,
         min=10,
         max=20,
         step=1,
@@ -292,15 +292,15 @@ def fit_spectrum(manual=True):
     
     lineflux_slider = widgets.FloatSlider(
         value=1,
-        min=0.1,
-        max=5,
-        step=0.1,
+        min=0.01,
+        max=2,
+        step=0.01,
         description='lineflux',
         disabled=False,
         continuous_update=True,
         orientation='horizontal',
         readout=True,
-        readout_format='.1f')
+        readout_format='.2f')
 
 
     interactive_plot = interactive(f, {'manual': manual}, cont=cont_slider, linepos=linepos_slider,
